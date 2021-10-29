@@ -50,7 +50,6 @@ body{
 .buttons{
     display: flex;
    align-items: center;
-   width: 219px;
    justify-content: space-between;
 }
 
@@ -72,6 +71,7 @@ body{
 }
 
 .button-primary{
+    margin-right: 10px;
     background: #1890FF;
     border: 1px solid #1890FF;
     color: #fff;
@@ -80,6 +80,16 @@ body{
 .button-icon{
 margin-right: 4px;
 
+}
+
+.button-out {
+    display: none;
+    margin: 0 5px;
+}
+
+.button-out .button-icon {
+    width: 16px;
+    height: 24px;
 }
 
 .button-card-text{
