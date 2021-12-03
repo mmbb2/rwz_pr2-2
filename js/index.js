@@ -15,8 +15,19 @@ const restaurants = document.querySelector(".restaurants");
 const menu = document.querySelector(".menu");
 const logo = document.querySelector(".logo");
 const cardsMenu = document.querySelector(".cards-menu");
+const menuHeading = document.querySelector(".menu-heading");
 
 let login = localStorage.getItem("login");
+
+const getData = async function(url) {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+      throw new Error(`Ошибка по адерсу ${url}, 
+      статус ошибка ${response.status}`);
+  }
+  return await response.json();
+};
 
 
 cardButton.addEventListener('click', function(e) {
@@ -104,29 +115,34 @@ function notAuthorized() {
     }
   }
 
-  function createCardReustarants() {
+  function createCardReustarants(restaurant) {
+    const { 
+      image, kitchen, 
+      name, price, stars, 
+      products, time_of_delivery: timeOfDelivery} = restaurant 
+
     const card = `
-        <a class="card card-restaurant wow animate__animated animate__fadeInUp" data-wow-delay="0">
-            <img src="img/pizza-plus.png" alt="image" class="card-image">
+        <a class="card card-restaurant wow animate__animated animate__fadeInUp" data-wow-delay="0" data-name="${name}" data-stars="${stars}" data-price="${price}" data-products="${products}">
+            <img src="${image}" alt="image" class="card-image">
             <div class="card-text">
                 <div class="card-heading">
                     <h3 class="card-title">
-                        Пицца плюс
+                    ${name}
                     </h3>
                     <span class="card-tag tag">
-                        50 мин
+                    ${timeOfDelivery} мин
                     </span>
                 </div>
                 <div class="card-info">
                     <div class="rating">
                         <img src="img/star.svg" alt="star" class="rating-star">
-                        4.5
+                        ${stars}
                     </div>
                     <div class="price">
-                        От 900 ₽
+                    От ${price} ₽
                     </div>
                     <div class="category">
-                        Пицца
+                    ${kitchen} 
                     </div>
                 </div>
             </div>
@@ -135,22 +151,45 @@ function notAuthorized() {
     cardsRestaurants.insertAdjacentHTML('beforeend', card);
 }
 
-function createCardGood() {
+function createReustarantInfo({ stars, name, price }) {
+
+  menuHeading.textContent = '';
+
+  menuHeading.insertAdjacentHTML('beforeend', `
+          <h2 class="section-title">
+          ${name}
+      </h2>
+      <div class="card-info">
+          <div class="rating">
+              <img src="img/star.svg" alt="star" class="rating-star">
+              ${stars}
+          </div>
+          <div class="price">
+              От ${price} ₽
+          </div>
+          <div class="category">
+              Пицца
+          </div>
+      </div>
+  `);
+}
+
+function createCardGood({ description, image, name, price }) {
     const card = document.createElement('div');
     card.className = 'card wow fadeInUp';
     card.setAttribute('data-wow-delay', 0);
     card.insertAdjacentHTML('beforeend', `
 
-    <img src="img/image.png" alt="image" class="card-image">
+    <img src="${image}" alt="image" class="card-image">
     <div class="card-text">
         <div class="card-heading">
             <h3 class="card-title card-title-regular">
-                Ролл угорь стандарт
+            ${name}
             </h3>
         </div>
         <div class="card-info">
             <div class="ingredients">
-                Рис, угорь, соус унаги, кунжут, водоросли нори.
+            ${description}
             </div>
         </div>
         <div class="card-buttons">
@@ -160,7 +199,7 @@ function createCardGood() {
                 </span>
                 <img src="img/shopping2.svg" alt="shopping-cart" class="button-card-image">
             </button>
-            <strong class="card-price-bold">250 ₽</strong>
+            <strong class="card-price-bold">${price} ₽</strong>
         </div>
     </div>
     `);
@@ -179,11 +218,12 @@ function openGoods(event) {
             containerPromo.classList.add('hide');
             restaurants.classList.add('hide');
             menu.classList.remove('hide');
+
+            createReustarantInfo(restourant.dataset);
     
-            createCardGood();
-            createCardGood();
-            createCardGood();
-            createCardGood();
+            getData(`./db/${restourant.dataset.products}`).then(function(data) {
+              data.forEach(createCardGood);
+          })
         }
     }
     else {
@@ -202,12 +242,6 @@ logo.addEventListener('click', function() {
     closeGoods();
 })
 
-  checkAuth();
-
-  createCardReustarants();
-createCardReustarants();
-createCardReustarants();
-createCardReustarants();
 
 
 new WOW().init();
@@ -219,4 +253,20 @@ const swiper = new Swiper('.swiper-container', {
   grabCursor: true,
 });
 
-console.log(swiper)
+
+function init() {
+  getData('./db/partners.json').then(function(data) {
+      data.forEach(createCardReustarants)
+  });
+  
+  cardsRestaurants.addEventListener('click', openGoods);
+  logo.addEventListener('click', function() {
+      closeGoods();
+  })
+  
+  checkAuth();
+  
+
+}
+
+init();
