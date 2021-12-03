@@ -211,3 +211,12 @@ createCardReustarants();
 
 
 new WOW().init();
+
+const swiper = new Swiper('.swiper-container', {
+  slidesPerView: 1,
+  loop: true,
+  autoplay: true,
+  grabCursor: true,
+});
+
+console.log(swiper)
