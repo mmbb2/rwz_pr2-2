@@ -84,6 +84,10 @@ body{
 
 }
 
+.cart-button{
+    display: none;
+}
+
 .button-primary{
     margin-right: 10px;
     background: #1890FF;
@@ -112,6 +116,11 @@ margin-right: 4px;
 
 .swiper-container{
     overflow: hidden;
+    z-index: 0;
+}
+
+.user-name{
+    margin-right: 5px;
 }
 
 .promo{
@@ -343,6 +352,7 @@ line-height: 21px;
     height: 100%;
     background: rgba(0, 0, 0, 0.4);
     display: none;
+    z-index: 9999;
 }
 
 .is-open{

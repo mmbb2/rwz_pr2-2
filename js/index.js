@@ -1,4 +1,4 @@
-const cardButton = document.querySelector('#cart-button');
+const cartButton = document.querySelector('#cart-button');
 const modal = document.querySelector('.modal');
 const close = document.querySelector('.close');
 
@@ -18,8 +18,12 @@ const cardsMenu = document.querySelector(".cards-menu");
 const menuHeading = document.querySelector(".menu-heading");
 const inputSearch = document.querySelector('.input-search');
 const pageName = document.querySelector('.page-name');
+const modalBody = document.querySelector(".modal-body");
+const modalPrice = document.querySelector(".modal-pricetag");
+const clearCart = document.querySelector(".clear-cart")
 
 let login = localStorage.getItem("login");
+let cart = []
 
 const getData = async function(url) {
   const response = await fetch(url);
@@ -30,15 +34,6 @@ const getData = async function(url) {
   }
   return await response.json();
 };
-
-
-cardButton.addEventListener('click', function(e) {
-    modal.classList.add('is-open');
-})
-
-close.addEventListener('click', function(e) {
-    modal.classList.remove('is-open');
-})
 
 
 function ToggleModalAuth() {
@@ -92,19 +87,28 @@ function notAuthorized() {
     function logOut() {
         login = '';
         localStorage.removeItem("login");
-        buttonAuth.style.display = "flex";
-        userName.style.display = "none";
-        buttonOut.style.display = "none";
+        buttonAuth.style.display = "";
+        cartButton.style.display = "none";
+        userName.style.display = "";
+        buttonOut.style.display = "";
+        userName.textContent = "";
         buttonOut.removeEventListener('click', logOut)
+        cart = []
         checkAuth();
       }
 
     loginInput.style.borderColor = "#000000";
     console.log("Авторизован");
     userName.textContent = login;
-    buttonAuth.style.display = "none";
+      buttonAuth.style.display = "none";
+    cartButton.style.display = "flex";
     userName.style.display = "inline";
     buttonOut.style.display = "flex";
+
+    if (localStorage.getItem(`cart_${login}`)) {
+      const data = JSON.parse(localStorage.getItem(`cart_${login}`));
+      cart.push(...data);
+    }
 
     buttonOut.addEventListener('click', logOut)
   }
@@ -176,7 +180,7 @@ function createReustarantInfo({ stars, name, price }) {
   `);
 }
 
-function createCardGood({ description, image, name, price }) {
+function createCardGood({ description, image, name, price, id }) {
     const card = document.createElement('div');
     card.className = 'card wow fadeInUp';
     card.setAttribute('data-wow-delay', 0);
@@ -185,17 +189,13 @@ function createCardGood({ description, image, name, price }) {
     <img src="${image}" alt="image" class="card-image">
     <div class="card-text">
         <div class="card-heading">
-            <h3 class="card-title card-title-regular">
-            ${name}
-            </h3>
+            <h3 class="card-title card-title-regular">${name}</h3>
         </div>
         <div class="card-info">
-            <div class="ingredients">
-            ${description}
-            </div>
+            <div class="ingredients">${description}</div>
         </div>
         <div class="card-buttons">
-            <button class="button button-primary">
+        <button class="button button-primary button-add-cart" id="${id}">
                 <span class="button-card-text">
                     В корзину
                 </span>
@@ -255,6 +255,80 @@ const swiper = new Swiper('.swiper-container', {
   grabCursor: true,
 });
 
+function saveCart() {
+  localStorage.setItem(`cart_${login}`, JSON.stringify(cart));
+}
+
+function addToCart(e) {
+  const target = e.target;
+  const buttonAddToCart = target.closest(".button-add-cart");
+  console.log(buttonAddToCart)
+
+  if (buttonAddToCart) {
+    const card = target.closest(".card");
+    const title = card.querySelector(".card-title").textContent;
+    const cost = card.querySelector(".card-price-bold").textContent;
+    const id = buttonAddToCart.id;
+    console.log(buttonAddToCart , title, cost, id, 'ffaf')
+    const food = cart.find((item) => item.id === id);
+
+    if (food) {
+      ++food.count;
+    } else {
+      cart.push({ id, title, cost, count: 1 });
+    }
+  }
+
+  saveCart();
+}
+
+function renderCart() {
+  modalBody.textContent = '';
+
+  cart.forEach(({ id, title, cost, count }) => {
+    const itemCart = `
+      <div class="food-row">
+        <span class="food-name">${title}</span>
+        <strong class="food-price">${cost}</strong>
+        <div class="food-counter">
+            <button class="counter-button counter-minus" data-id="${id}">-</button>
+            <span class="counter">${count}</span>
+            <button class="counter-button counter-plus" data-id="${id}">+</button>
+        </div>
+      </div>
+    `;
+
+    modalBody.insertAdjacentHTML("afterbegin", itemCart);
+  });
+
+  const totalPrice = cart.reduce((acc, item) => acc + parseInt(item.cost) * item.count, 0);
+  modalPrice.textContent = totalPrice + " ₽";
+
+  saveCart();
+}
+
+function changeCount(e) {
+  const target = e.target;
+
+  if (target.classList.contains("counter-button")) {
+    const item = cart.find((item) => item.id === target.dataset.id);
+
+    if (target.classList.contains("counter-minus")) {
+      item.count--;
+
+      if (item.count === 0) {
+        cart.splice(cart.indexOf(item), 1);
+      }
+    }
+
+    if (target.classList.contains("counter-plus")) {
+      item.count++;
+    }
+
+    renderCart();
+  }
+}
+
 
 function init() {
   getData('./db/partners.json').then(function(data) {
@@ -265,7 +339,24 @@ function init() {
   logo.addEventListener('click', function() {
       closeGoods();
   })
+
+  cartButton.addEventListener('click', function(e) {
+    modal.classList.add('is-open');
+    renderCart()
+})
+
+close.addEventListener('click', function(e) {
+    modal.classList.remove('is-open');
+})
   
+modalBody.addEventListener("click", changeCount);
+clearCart.addEventListener("click", () => {
+  cart = [];
+
+  renderCart();
+})
+  cardsMenu.addEventListener("click", addToCart);
+
   checkAuth();
   
   inputSearch.addEventListener('keypress', function(event) {
