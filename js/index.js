@@ -16,6 +16,8 @@ const menu = document.querySelector(".menu");
 const logo = document.querySelector(".logo");
 const cardsMenu = document.querySelector(".cards-menu");
 const menuHeading = document.querySelector(".menu-heading");
+const inputSearch = document.querySelector('.input-search');
+const pageName = document.querySelector('.page-name');
 
 let login = localStorage.getItem("login");
 
@@ -266,6 +268,57 @@ function init() {
   
   checkAuth();
   
+  inputSearch.addEventListener('keypress', function(event) {
+    if(event.charCode === 13) {
+
+        pageName.textContent = '';
+        const value = event.target.value.trim();
+        
+        if(!value) {
+            event.target.classList.add('invalid-input');
+            setTimeout(function() {
+                event.target.classList.remove('invalid-input');
+            },1500)
+            event.target.value = '';
+            return;
+        }
+
+        getData('/db/partners.json')
+          .then(function(data) {
+            return data.map(function(partner) {
+                return partner.products;
+            });
+        })
+        .then(function(linkProducts) {
+            linkProducts.forEach(function(link) {
+                cardsMenu.textContent = '';
+
+                getData(`./db/${link}`)
+                  .then(function(data) {
+                    const resultSearch = data.filter(item => {
+                        const name = item.name.toLowerCase();
+                        return name.includes(value.toLowerCase());
+                    });
+
+                    containerPromo.classList.add('hide');
+                    restaurants.classList.add('hide');
+                    menu.classList.remove('hide');
+                    userName.classList.add('hide');
+
+                    if(resultSearch.length == 0) {
+                        if(pageName.textContent) return;
+                        pageName.textContent  = 'Ничего не найдено';
+                    }
+                    else {
+                        pageName.textContent = 'Результат поиска';
+                        resultSearch.forEach(createCardGood);
+                    }
+                    pageName.classList.remove('hide');
+                })
+            })
+        })
+    }
+});
 
 }
 

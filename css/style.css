@@ -51,6 +51,16 @@ body{
     margin-left: auto;
 }
 
+.invalid-input, .invalid-input:focus {
+    outline: 2px solid #d63b3b;
+    background: rgb(248, 138, 138);
+    
+}
+
+.invalid-input::placeholder{
+    color: white;
+}
+
 .buttons{
     display: flex;
    align-items: center;
